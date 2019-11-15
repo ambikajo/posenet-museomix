@@ -1,138 +1,182 @@
-let startPlay = false;
-let resetScreen = false;
-
-let video1;
-
-let constraints1;
-
-let poses1 = [];
-
-let poseNet1;
-
-let helFont; //variable for the font
-//details for the score
-let current = 0;
-
-let final = 0;
-
-let score = 0;
-let iterations = 0;
-//size of the circle on start
-let size = 20;
-
-
-function gotDevices(deviceInfos) {
-    for (let i = 0; i !== deviceInfos.length; ++i) {
-        const deviceInfo = deviceInfos[i];
-        if (deviceInfo.kind == "videoinput") {
-            console.log(deviceInfo);
-        }
-
-
-    }
-}
-
-
-function streamCameras() {
-    for (var i = 0; i < 2; i++) {
-        console.log(videolist[i]);
-
-    }
-}
-
-navigator.mediaDevices.enumerateDevices().then(gotDevices);
-
+let img;
+let mCentre; //mural centre
+let fish1;
+let fish2;
+let pg;
+let iterations;
+let x = 0;
+let s = 0;
+let time;
+let start = 0;
+//let x = 0
+let video;
+let poseNet;
+let poses = [];
+let noseX = 0;
+let noseY = 0;
+let distance; 
 function preload() {
-    helFont = loadFont('SFCompactDisplay-Black.otf');
+    img = loadImage("images/mural.jpeg");
+    mCentre = loadImage("images/mural_centre.png");
+    fish1 = loadImage("images/mural_fish.png");
+    fish2 = loadImage("images/mural_fish2.png");
 }
 
 function setup() {
     createCanvas(innerWidth, innerHeight);
-    //copy the device info from console to create constraints for the webcams
-    constraints1 = {
-        video: {
-            deviceId: "b5c6c47394727cf069ffadac37b87e166d140373a6ebef530a2460efa2ab4aea",
-            groupId: "428be613f540738fd77e6b7fd8203603d189d03dc6dbf34678bcd5639cae9074",
-            kind: "videoinput",
-            label: "C922 Pro Stream Webcam (046d:085c)"
-        }
-    }
-
-    video1 = createCapture(constraints1);
-    //video2 = createCapture(constraints2);
-   video1.size(width, height)
-    //load posenet
-    poseNet1 = ml5.poseNet(video1, modelLoaded);
-    poseNet1.on('pose', function (results) {
-        poses1 = results;
-    });
-
-
+    pg = createGraphics(innerWidth, innerHeight)
+    time = millis()
+    imageMode(CENTER);
+    video = createCapture(VIDEO)
+    //video.size(120, 80);
+    //video.hide();
+    poseNet = ml5.poseNet(video, modelLoaded);
+    poseNet.on('pose', function (results) {
+        poses = results;
+    })
 }
-// When the model is loaded
-modelLoaded = function () {
-    console.log('Model Loaded!');
+
+function modelLoaded() {
+    console.log('model ready!');
 }
+
 
 function draw() {
-    background(120, 120, 210);
-    image(video1, 0, 0,width, height);
+    background(255)
+    image(img, width / 2, height / 2)
+    image(video, width - 100, img.height, 120, 80)
+    // pg.background(255)
+    image(pg, width / 2, height / 2)
+    //    turtleRing()
+    //    midCircles()
+    //    parrotMove()
+    
+         drawKeypoints()
+    
+        
+     rotC()
+    
+   
 
 
-
-    drawKeypoints1();
-    drawSkeleton(poses1);
 
 
 }
 
-function drawKeypoints1() {
-    current = final;
-    final = 0;
-    //initiating the poses and nose keypoint for video1
-    for (let i = 0; i < poses1.length; i++) {
-
-        let pr = poses1[i].pose.keypoints[0];
-        final += pr.position.x;
-        if (poses1[i].pose.score > 0.20) {
-            fill(255, 0, 0, 100);
-            noStroke();
-            if (score <= 10){
-              if (final - current > 2 && current != 0) {
-                score += 1;
-                size += 7;
-                console.log(score);
-              }
-            } else {
-              score =0;
-              size = 0
-            }
-
-
-          if (poses1.length > 2){
-            ellipse(pr.position.x, pr.position.y, size);
-          } else {
-            rectMode(CENTER)
-            rect(pr.position.x, pr.position.y, size, size);
-          }
-
-        }
+function turtleRing() {
+    fill(255)
+    let fy = sin(x) * 10
+    image(fish1, 190, 225 + fy)
+    image(fish2, 1041, 225 + fy)
+    if (s % 20 == 0) {
+        fill(255)
+        ellipse(180, 580, 100, 100)
+        ellipse(1154, 398, 100, 100)
+    } else {
+        fill(0)
     }
 
 
 }
 
-function drawSkeleton() {
-    // Loop through all the skeletons detected
-    for (let i = 0; i < poses1.length; i++) {
-        let skeleton = poses1[i].skeleton;
-        // For every skeleton, loop through all body connections
-        for (let j = 0; j < skeleton.length; j++) {
-            let partA = skeleton[j][0];
-            let partB = skeleton[j][1];
-            stroke(255);
-            strokeWeight(1);
-            line(partA.position.x, partA.position.y, partB.position.x, partB.position.y);
+function parrotMove() {
+    pg.noStroke()
+    let xl = cos(x) * 400
+    let yl = sin(x) * 400
+    //print(x) //- needed to understand the location of x when you want the arc to start.
+    if (x > 2) {
+
+        pg.fill(255)
+        pg.ellipse(xl + width / 2, yl + height / 2, 60, 60)
+        //print(pg.ellipse.length)
+    }
+   // x += 0.02
+
+
+}
+
+
+
+function rotC() {
+    
+   translate(width / 2, height / 2);
+    rotate(x)
+    image(mCentre, 0, 0)
+    x += 0.02
+
+}
+
+function midCircles() {
+    s += 0.5
+    noStroke()
+    if (s < 10) {
+        fill('red')
+        ellipse(511, 552, 120, 120)
+    } else if (s < 15) {
+        fill('white')
+        ellipse(429, 416, 120, 120)
+    } else if (s < 20) {
+        fill('blue')
+        ellipse(466, 268, 120, 120)
+    } else if (s < 25) {
+        fill('orange')
+        ellipse(782, 268, 120, 120)
+    } else if (s < 30) {
+        fill('purple')
+        ellipse(855, 416, 120, 120)
+    } else if (s < 35) {
+        fill('red')
+        ellipse(762, 552, 120, 120)
+    } else if (s < 40) {
+        s = 0;
+    }
+
+}
+
+function keyPressed() {
+    //    if (keyCode === 82) {
+    //        print("reset")
+    //        x = 0;
+    //        s = 0;
+    //       // pg.redraw()
+    //    }
+    // print("YES")
+}
+
+function drawKeypoints() {
+    for (let i = 0; i < poses.length; i++) {
+        for (let j = 0; j < poses[i].pose.keypoints.length; j++) {
+            let nX = poses[i].pose.keypoints[0].position.x;
+            let nY = poses[i].pose.keypoints[0].position.y;
+
+            if (poses[i].pose.keypoints[0].score > 0.4) {
+                noStroke();
+                fill(0,150);
+                // translate(width/2,0)
+               // ellipse(nX, nY, 10);
+
+
+                if (poses.length == 2) {
+
+                    let newX1 = poses[0].pose.keypoints[0].position.x;
+                    let newX2 = poses[1].pose.keypoints[0].position.x;
+                    //let noseX1 = lerp(noseX, newX1, 0.5);
+                    //let noseX2 = lerp(noseX, newX2, 0.5);
+                    distance = abs(newX1 - newX2);
+                    print(distance);
+                    fill(0);
+                    // rect(-1, -1, width+1, height+1);
+                    //fill(255, 100);
+                    //rotC()
+                    ellipse(nX, nY, 10)
+                    ellipse(width / 2, height / 2, distance, distance);
+                    
+                } 
+            } 
+            // flashy();
+            //ellipse(nX, nY, 100);
+
         }
     }
+
 }
